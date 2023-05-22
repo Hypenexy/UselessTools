@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Img2BoxShadow</title>
+</head>
+<body>
+    <img id="image">
+    <div style="display: inline-block; width: 1px; height: 1px; background: purple;" id="result"></div>
+    <input type="file" id="input">
+    <script>
+        function rgbaToHex(r, g, b, a){
+            function componentToHex(c){
+                if(c==0){
+                    return "00";
+                }
+                var hex = c.toString(16);
+                return hex.length == 1 ? "0" + hex : hex;
+            }
+            var hex = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+            if(a || a==0){
+                if(a!=255){
+                    hex += componentToHex(a);
+                }
+            }
+            return hex;
+        }
+
+        const img = document.getElementById("image");
+        const input = document.getElementById("input");
+        function translate(){
+            const canvas = document.createElement('canvas')
+            const context = canvas.getContext && canvas.getContext('2d')
+
+            const height = canvas.height = img.naturalHeight || img.offsetHeight || img.height;
+            const width = canvas.width = img.naturalWidth || img.offsetWidth || img.width;
+            context.drawImage(img, 0, 0);
+
+            const imgData = context.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            var boxshadow = "";
+
+            for(let i = 0; i < data.length; i += 4) {
+                const red = data[i];
+                const green = data[i + 1];
+                const blue = data[i + 2];
+                const alpha = data[i + 3];
+
+                const color = rgbaToHex(red, green, blue, alpha);
+                const pixel = i/4;
+                const line = (pixel/width).toString().split(".")[0];
+                const row = pixel - width*line;
+
+                boxshadow += line+"px "+row+"px 0px "+color+",";
+            }
+            boxshadow = boxshadow.slice(0, -1);
+            console.log(boxshadow);
+
+            const styleblock = document.createElement("style");
+            styleblock.innerText = "#result{box-shadow: "+boxshadow+"}";
+            document.head.appendChild(styleblock);
+
+            // const result = document.getElementById("result");
+
+            // result.style.boxShadow = boxshadow;
+            console.log("Done");
+        }
+
+        input.addEventListener("change", function(){
+            const [file] = input.files
+            img.src = URL.createObjectURL(file);
+            setTimeout(() => {
+                translate()
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
